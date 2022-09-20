@@ -1,0 +1,11 @@
+commit 6b626880e5f929b21a705b9c57f74a1dd1c68df6
+Author: Nicolas Caramelli <caramelli.devel@gmail.com>
+Date:   Tue Sep 20 19:07:52 2022 +0200
+
+    LIRC input driver
+
+commit f36c18e5c29b13acff4713cb6371b87520008234
+Author: Nicolas Caramelli <caramelli.devel@gmail.com>
+Date:   Tue Sep 20 19:00:46 2022 +0200
+
+    Initial revision
