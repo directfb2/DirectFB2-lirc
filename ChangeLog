@@ -1,3 +1,24 @@
+commit c4058f2b30797d60e4225e1e3635375c55b7301a
+Author: Nicolas Caramelli <caramelli.devel@gmail.com>
+Date:   Fri Jan 13 09:23:20 2023 +0100
+
+    Add lirc_client library support
+
+commit 72ceb35dbbcf0003b84e652c0b6ac8456778fdc2
+Merge: f36c18e 4a156f3
+Author: DirectFB2 <80045286+directfb2@users.noreply.github.com>
+Date:   Tue Sep 20 19:11:07 2022 +0200
+
+    Merge pull request #1 from caramelli/master
+    
+    LIRC input driver
+
+commit 4a156f3e90b6057b370362d5c0dba1d6e34dad68
+Author: Nicolas Caramelli <caramelli.devel@gmail.com>
+Date:   Tue Sep 20 19:08:20 2022 +0200
+
+    Add ChangeLog
+
 commit 6b626880e5f929b21a705b9c57f74a1dd1c68df6
 Author: Nicolas Caramelli <caramelli.devel@gmail.com>
 Date:   Tue Sep 20 19:07:52 2022 +0200
