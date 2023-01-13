@@ -272,7 +272,11 @@ driver_open_device( CoreInputDevice  *device,
      /* Allocate and fill private data. */
      data = D_CALLOC( 1, sizeof(LircData) );
      if (!data) {
+#ifdef HAVE_LIRC_CLIENT
+          lirc_deinit();
+#else
           close( fd );
+#endif
           return D_OOM();
      }
 
@@ -310,10 +314,10 @@ driver_close_device( void *driver_data )
      direct_thread_join( data->thread );
      direct_thread_destroy( data->thread );
 
-     close( data->fd );
-
 #ifdef HAVE_LIRC_CLIENT
      lirc_deinit();
+#else
+     close( data->fd );
 #endif
 
      D_FREE( data );
