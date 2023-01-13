@@ -115,7 +115,7 @@ lirc_event_thread( DirectThread *thread,
           strncpy( line, code, sizeof(line) );
           free( code );
 #else
-          if (read( data->fd, line, sizeof(line) < 1)
+          if (read( data->fd, line, sizeof(line) ) < 1)
                continue;
 #endif
 
