@@ -19,6 +19,9 @@
 #include <core/input_driver.h>
 #include <direct/thread.h>
 #include <directfb_keynames.h>
+#ifdef HAVE_LIRC_CLIENT
+#include <lirc/lirc_client.h>
+#endif
 
 D_DEBUG_DOMAIN( LIRC, "Input/LIRC", "LIRC Input Driver" );
 
@@ -70,12 +73,14 @@ lirc_event_thread( DirectThread *thread,
           struct timeval           timeout;
           int                      status;
           char                     line[128];
-          ssize_t                  len;
+#ifdef HAVE_LIRC_CLIENT
+          char                    *code;
+#endif
           char                    *s, *name;
           struct DFBKeySymbolName *symbol_name = NULL;
 
           FD_ZERO( &set );
-          FD_SET( data->fd,&set );
+          FD_SET( data->fd, &set );
 
           timeout.tv_sec  = 0;
           timeout.tv_usec = 200000;
@@ -104,9 +109,15 @@ lirc_event_thread( DirectThread *thread,
           }
 
           /* Read data. */
-          len = read( data->fd, line, sizeof(line) );
-          if (len < 1)
+#ifdef HAVE_LIRC_CLIENT
+          if (lirc_nextcode( &code ) == -1)
                continue;
+          strncpy( line, code, sizeof(line) );
+          free( code );
+#else
+          if (read( data->fd, line, sizeof(line) < 1)
+               continue;
+#endif
 
           /* Get new key. */
           s = strchr( line, ' ' );
@@ -172,9 +183,17 @@ lirc_event_thread( DirectThread *thread,
 static int
 driver_get_available()
 {
+#ifndef HAVE_LIRC_CLIENT
      int                fd;
      struct sockaddr_un addr;
+#endif
 
+#ifdef HAVE_LIRC_CLIENT
+     if (lirc_init( "LIRC", 0 ) == -1)
+          return 0;
+
+     lirc_deinit();
+#else
      /* Create socket. */
      fd = socket( PF_UNIX, SOCK_STREAM, 0 );
      if (fd < 0)
@@ -184,38 +203,48 @@ driver_get_available()
      addr.sun_family = AF_UNIX;
      direct_snputs( addr.sun_path, "/var/run/lirc/lircd", sizeof(addr.sun_path) );
 
-     if (connect( fd, &addr, sizeof(addr) ) < 0) {
+     if (connect( fd, (struct sockaddr*) &addr, sizeof(addr) ) < 0) {
           close( fd );
           return 0;
      }
 
      close( fd );
+#endif
 
      return 1;
 }
 
 static void
-driver_get_info( InputDriverInfo *info )
+driver_get_info( InputDriverInfo *driver_info )
 {
-     info->version.major = 0;
-     info->version.minor = 1;
+     driver_info->version.major = 0;
+     driver_info->version.minor = 1;
 
-     snprintf( info->name,   DFB_INPUT_DRIVER_INFO_NAME_LENGTH,   "LIRC" );
-     snprintf( info->vendor, DFB_INPUT_DRIVER_INFO_VENDOR_LENGTH, "DirectFB" );
+     snprintf( driver_info->name,   DFB_INPUT_DRIVER_INFO_NAME_LENGTH,   "LIRC" );
+     snprintf( driver_info->vendor, DFB_INPUT_DRIVER_INFO_VENDOR_LENGTH, "DirectFB" );
 }
 
 static DFBResult
 driver_open_device( CoreInputDevice  *device,
                     unsigned int      number,
-                    InputDeviceInfo  *info,
+                    InputDeviceInfo  *device_info,
                     void            **driver_data )
 {
      LircData           *data;
      int                 fd;
+#ifndef HAVE_LIRC_CLIENT
      struct sockaddr_un  addr;
+#endif
 
      D_DEBUG_AT( LIRC, "%s()\n", __FUNCTION__ );
 
+#ifdef HAVE_LIRC_CLIENT
+     fd = lirc_init( "LIRC", 0 );
+     if (fd == -1) {
+          D_ERROR( "Input/LIRC: Could not connect to lircd socket!\n" );
+          return DFB_INIT;
+     }
+#else
      /* Create socket. */
      fd = socket( PF_UNIX, SOCK_STREAM, 0 );
      if (fd < 0) {
@@ -226,18 +255,19 @@ driver_open_device( CoreInputDevice  *device,
      /* Initiate connection */
      addr.sun_family = AF_UNIX;
      direct_snputs( addr.sun_path, "/var/run/lirc/lircd", sizeof(addr.sun_path) );
-     if (connect( fd, &addr, sizeof(addr) ) < 0) {
+     if (connect( fd, (struct sockaddr*) &addr, sizeof(addr) ) < 0) {
           D_PERROR( "Input/LIRC: Could not connect the socket!\n" );
           close( fd );
           return DFB_INIT;
      }
+#endif
 
      /* Fill device information. */
-     info->prefered_id = DIDID_REMOTE;
-     info->desc.type   = DIDTF_REMOTE;
-     info->desc.caps   = DICAPS_KEYS;
-     snprintf( info->desc.name,   DFB_INPUT_DEVICE_DESC_NAME_LENGTH,   "Remote Control" );
-     snprintf( info->desc.vendor, DFB_INPUT_DEVICE_DESC_VENDOR_LENGTH, "LIRC" );
+     device_info->prefered_id = DIDID_REMOTE;
+     device_info->desc.type   = DIDTF_REMOTE;
+     device_info->desc.caps   = DICAPS_KEYS;
+     snprintf( device_info->desc.name,   DFB_INPUT_DEVICE_DESC_NAME_LENGTH,   "Remote Control" );
+     snprintf( device_info->desc.vendor, DFB_INPUT_DEVICE_DESC_VENDOR_LENGTH, "LIRC" );
 
      /* Allocate and fill private data. */
      data = D_CALLOC( 1, sizeof(LircData) );
@@ -281,6 +311,10 @@ driver_close_device( void *driver_data )
      direct_thread_destroy( data->thread );
 
      close( data->fd );
+
+#ifdef HAVE_LIRC_CLIENT
+     lirc_deinit();
+#endif
 
      D_FREE( data );
 }
