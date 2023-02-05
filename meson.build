@@ -22,18 +22,17 @@ directfb_dep = dependency('directfb-internal')
 moduledir = directfb_dep.get_pkgconfig_variable('moduledir')
 
 lirc_client_dep = []
-lirc_client_def = []
 if get_option('lirc_client')
   lirc_client_dep = dependency('lirc', required: false)
 
   if lirc_client_dep.found()
-    lirc_client_def = '-DHAVE_LIRC_CLIENT'
+    add_global_arguments('-DHAVE_LIRC_CLIENT', language: 'c')
   else
     if meson.get_compiler('c').has_header('lirc/lirc_client.h')
       lirc_client_dep = meson.get_compiler('c').find_library('lirc_client', required: false)
 
       if lirc_client_dep.found()
-        lirc_client_def = '-DHAVE_LIRC_CLIENT'
+        add_global_arguments('-DHAVE_LIRC_CLIENT', language: 'c')
       endif
     endif
   endif
@@ -41,7 +40,6 @@ endif
 
 library('directfb_lirc',
         'lirc.c',
-        c_args: lirc_client_def,
         dependencies: [directfb_dep, lirc_client_dep],
         install: true,
         install_dir: join_paths(moduledir, 'inputdrivers'))

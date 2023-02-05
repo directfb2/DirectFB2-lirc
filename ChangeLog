@@ -1,3 +1,54 @@
+commit 413bc38fae02c4ee1442a59aaee1d47aa7be9003
+Author: Nicolas Caramelli <caramelli.devel@gmail.com>
+Date:   Sun Feb 5 07:04:46 2023 +0100
+
+    Add lircrc configuration file support (only when using lirc_client library)
+
+commit 9f60fe601a177cb9358d54d0aa3f246468466811
+Merge: 52cfb16 d58e3cc
+Author: DirectFB2 <80045286+directfb2@users.noreply.github.com>
+Date:   Fri Jan 13 10:29:01 2023 +0100
+
+    Merge pull request #4 from caramelli/master
+    
+    Fix connection closure
+
+commit d58e3cc1e7846d6dfd048677ccd455b3cb93e991
+Author: Nicolas Caramelli <caramelli.devel@gmail.com>
+Date:   Fri Jan 13 10:29:17 2023 +0100
+
+    Fix connection closure
+
+commit 52cfb16edf688367b61dd2ace3cae7dadc2f4270
+Merge: f1e522d 3233934
+Author: DirectFB2 <80045286+directfb2@users.noreply.github.com>
+Date:   Fri Jan 13 09:47:25 2023 +0100
+
+    Merge pull request #3 from caramelli/master
+    
+    Add missing bracket...
+
+commit 3233934448b6cdf276f4398debdc7097cd1e84d3
+Author: Nicolas Caramelli <caramelli.devel@gmail.com>
+Date:   Fri Jan 13 09:47:30 2023 +0100
+
+    Add missing bracket...
+
+commit f1e522db453422e804a452356ce534b5d7919a5f
+Merge: 72ceb35 b4e73d0
+Author: DirectFB2 <80045286+directfb2@users.noreply.github.com>
+Date:   Fri Jan 13 09:26:30 2023 +0100
+
+    Merge pull request #2 from caramelli/master
+    
+    Add lirc_client library support
+
+commit b4e73d0d7e52d30fda27c966a6410643b19b41dd
+Author: Nicolas Caramelli <caramelli.devel@gmail.com>
+Date:   Fri Jan 13 09:23:25 2023 +0100
+
+    Update ChangeLog
+
 commit c4058f2b30797d60e4225e1e3635375c55b7301a
 Author: Nicolas Caramelli <caramelli.devel@gmail.com>
 Date:   Fri Jan 13 09:23:20 2023 +0100
