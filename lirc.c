@@ -30,11 +30,14 @@ DFB_INPUT_DRIVER( lirc )
 /**********************************************************************************************************************/
 
 typedef struct {
-     CoreInputDevice *device;
+     CoreInputDevice    *device;
 
-     int              fd;
+     int                 fd;
+#ifdef HAVE_LIRC_CLIENT
+     struct lirc_config *config;
+#endif
 
-     DirectThread    *thread;
+     DirectThread       *thread;
 } LircData;
 
 static DirectFBKeySymbolNames(keynames);
@@ -76,7 +79,8 @@ lirc_event_thread( DirectThread *thread,
 #ifdef HAVE_LIRC_CLIENT
           char                    *code;
 #endif
-          char                    *s, *name;
+          char                    *s;
+          char                    *name        = NULL;
           struct DFBKeySymbolName *symbol_name = NULL;
 
           FD_ZERO( &set );
@@ -86,12 +90,12 @@ lirc_event_thread( DirectThread *thread,
           timeout.tv_usec = 200000;
 
           status = select( data->fd + 1, &set, NULL, NULL, &timeout );
-
-          if (status < 0 && errno != EINTR)
-               break;
-
-          if (status < 0)
-               continue;
+          if (status < 0) {
+               if (errno == EINTR)
+                    continue;
+               else
+                    break;
+          }
 
           /* Check timeout, release last key. */
           if (status == 0) {
@@ -112,27 +116,35 @@ lirc_event_thread( DirectThread *thread,
 #ifdef HAVE_LIRC_CLIENT
           if (lirc_nextcode( &code ) == -1)
                continue;
-          strncpy( line, code, sizeof(line) );
-          free( code );
+
+          if (data->config)
+               lirc_code2char(data->config, code, &name);
+
+          if (!name) {
+               strncpy( line, code, sizeof(line) );
+               free( code );
+          }
 #else
           if (read( data->fd, line, sizeof(line) ) < 1)
                continue;
 #endif
 
-          /* Get new key. */
-          s = strchr( line, ' ' );
-          if (!s || !s[1])
-               continue;
+          if (!name) {
+               /* Get new key. */
+               s = strchr( line, ' ' );
+               if (!s || !s[1])
+                    continue;
 
-          s = strchr( ++s, ' ' );
-          if (!s|| !s[1])
-               continue;
+               s = strchr( ++s, ' ' );
+               if (!s|| !s[1])
+                    continue;
 
-          name = ++s;
+               name = ++s;
 
-          s = strchr( name, ' ' );
-          if (s)
-               *s = '\0';
+               s = strchr( name, ' ' );
+               if (s)
+                    *s = '\0';
+          }
 
           if (strlen( name ))
                symbol_name = bsearch( name, keynames, D_ARRAY_SIZE(keynames), sizeof(keynames[0]), keyname_compare );
@@ -189,7 +201,7 @@ driver_get_available()
 #endif
 
 #ifdef HAVE_LIRC_CLIENT
-     if (lirc_init( "LIRC", 0 ) == -1)
+     if (lirc_init( "directfb", 0 ) == -1)
           return 0;
 
      lirc_deinit();
@@ -232,18 +244,22 @@ driver_open_device( CoreInputDevice  *device,
 {
      LircData           *data;
      int                 fd;
-#ifndef HAVE_LIRC_CLIENT
+#ifdef HAVE_LIRC_CLIENT
+     struct lirc_config *config = NULL;
+#else
      struct sockaddr_un  addr;
 #endif
 
      D_DEBUG_AT( LIRC, "%s()\n", __FUNCTION__ );
 
 #ifdef HAVE_LIRC_CLIENT
-     fd = lirc_init( "LIRC", 0 );
+     fd = lirc_init( "directfb", 0 );
      if (fd == -1) {
           D_ERROR( "Input/LIRC: Could not connect to lircd socket!\n" );
           return DFB_INIT;
      }
+
+     lirc_readconfig( NULL, &config, NULL );
 #else
      /* Create socket. */
      fd = socket( PF_UNIX, SOCK_STREAM, 0 );
@@ -273,6 +289,9 @@ driver_open_device( CoreInputDevice  *device,
      data = D_CALLOC( 1, sizeof(LircData) );
      if (!data) {
 #ifdef HAVE_LIRC_CLIENT
+          if (data->config)
+               lirc_freeconfig( data->config );
+
           lirc_deinit();
 #else
           close( fd );
@@ -282,6 +301,9 @@ driver_open_device( CoreInputDevice  *device,
 
      data->device = device;
      data->fd     = fd;
+#ifdef HAVE_LIRC_CLIENT
+     data->config = config;
+#endif
 
      qsort( keynames, D_ARRAY_SIZE(keynames), sizeof(keynames[0]), keynames_sort_compare );
 
@@ -315,6 +337,9 @@ driver_close_device( void *driver_data )
      direct_thread_destroy( data->thread );
 
 #ifdef HAVE_LIRC_CLIENT
+     if (data->config)
+          lirc_freeconfig( data->config );
+
      lirc_deinit();
 #else
      close( data->fd );
