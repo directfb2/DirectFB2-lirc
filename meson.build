@@ -19,27 +19,35 @@ project('DirectFB2-lirc', 'c',
 
 directfb_dep = dependency('directfb-internal')
 
-moduledir = directfb_dep.get_pkgconfig_variable('moduledir')
+moduledir = directfb_dep.get_variable(pkgconfig: 'moduledir')
 
+lirc = []
 lirc_client_dep = []
 if get_option('lirc_client')
   lirc_client_dep = dependency('lirc', required: false)
 
   if lirc_client_dep.found()
     add_global_arguments('-DHAVE_LIRC_CLIENT', language: 'c')
-  else
-    if meson.get_compiler('c').has_header('lirc/lirc_client.h')
-      lirc_client_dep = meson.get_compiler('c').find_library('lirc_client', required: false)
-
-      if lirc_client_dep.found()
-        add_global_arguments('-DHAVE_LIRC_CLIENT', language: 'c')
-      endif
-    endif
+    lirc = 'lirc'
   endif
 endif
+
+pkgconfig = import('pkgconfig')
 
 library('directfb_lirc',
         'lirc.c',
         dependencies: [directfb_dep, lirc_client_dep],
         install: true,
         install_dir: join_paths(moduledir, 'inputdrivers'))
+
+pkgconfig.generate(filebase: 'directfb-inputdriver-lirc',
+                   variables: 'moduledir=' + moduledir,
+                   name: 'DirectFB-inputdriver-lirc',
+                   description: 'LIRC input driver',
+                   requires_private: lirc,
+                   libraries_private: ['-L${moduledir}/inputdrivers',
+                                       '-Wl,--whole-archive -ldirectfb_lirc -Wl,--no-whole-archive'])
+
+if get_option('default_library') != 'shared'
+  meson.add_install_script('dfb-update-pkgconfig', skip_if_destdir: true)
+endif
