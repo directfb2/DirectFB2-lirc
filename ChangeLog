@@ -1,3 +1,24 @@
+commit 50dce27d72d8eaf741a5be13271c51d665125b30
+Author: Nicolas Caramelli <caramelli.devel@gmail.com>
+Date:   Fri Mar 24 09:21:37 2023 +0100
+
+    Add pkg-config file (for static build)
+
+commit 5890f91c1e95937f30ee2a10203b39dd6cab2b3c
+Merge: 9f60fe6 7d0e7eb
+Author: DirectFB2 <80045286+directfb2@users.noreply.github.com>
+Date:   Sun Feb 5 07:05:23 2023 +0100
+
+    Merge pull request #5 from caramelli/master
+    
+    Add lircrc configuration file support (only when using lirc_client library)
+
+commit 7d0e7eb4fb742bafec402b1648c7803db3539852
+Author: Nicolas Caramelli <caramelli.devel@gmail.com>
+Date:   Sun Feb 5 07:05:01 2023 +0100
+
+    Update ChangeLog
+
 commit 413bc38fae02c4ee1442a59aaee1d47aa7be9003
 Author: Nicolas Caramelli <caramelli.devel@gmail.com>
 Date:   Sun Feb 5 07:04:46 2023 +0100
